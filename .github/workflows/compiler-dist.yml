@@ -8,9 +8,6 @@ on:
       - ".github/scripts/release-tag"
       - ".github/scripts/install-zig"
       - ".github/actions/setup-ci/**"
-      - ".github/devbox-intel/**"
-      - ".github/scripts/build-macos-compiler"
-      - ".github/scripts/cmake-libcxx"
       - "dev/release/**"
       - "dev/toolchains/**"
       - ".github/scripts/install-zig-macos"
@@ -47,7 +44,7 @@ concurrency:
 
 # Every job that needs nothing from another runs at once: the safeguards,
 # the compiler's tests and the package, whose programs then run on Windows
-# and macOS. A release publishes only when every job here has passed.
+# and Apple Silicon macOS. A release publishes only when every job here has passed.
 jobs:
   safeguards:
     runs-on: ubuntu-latest
@@ -148,8 +145,6 @@ jobs:
         include:
           - runner: macos-latest
             arch: aarch64
-          - runner: macos-15-intel
-            arch: x86_64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     env:
@@ -160,60 +155,19 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Install Nix for macOS
-        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
-        with:
-          github_access_token: ${{ github.token }}
       - name: Set up compiler toolchain
-        if: matrix.arch == 'aarch64'
         uses: ./.github/actions/setup-ci
-        with:
-          skip-nix-installation: 'true'
-      - name: Install Intel Devbox toolchain
-        if: matrix.arch == 'x86_64'
-        uses: jetify-com/devbox-install-action@8c6a66ed6273138b1915457069de78cb52fe3bd7 # v0.15.0
-        with:
-          project-path: .github/devbox-intel
-          enable-cache: true
-          skip-nix-installation: 'true'
-      - name: Set up Intel compiler toolchain
-        if: matrix.arch == 'x86_64'
-        shell: bash
-        run: |
-          apple_clang="$(xcrun --find clang)"
-          cmake_bin="$RUNNER_TEMP/llvm-cmake-bin"
-          mkdir -p "$cmake_bin"
-          ln -s "$GITHUB_WORKSPACE/.github/scripts/cmake-libcxx" "$cmake_bin/cmake"
-          real_cmake="$(command -v cmake)"
-          echo "ZANE_REAL_CMAKE=$real_cmake" >> "$GITHUB_ENV"
-          echo "$cmake_bin" >> "$GITHUB_PATH"
-          export PATH="$cmake_bin:$PATH"
-          apple_clang_headers="$("$apple_clang" -print-resource-dir)/include"
-          export CPATH="$apple_clang_headers${CPATH:+:$CPATH}"
-          devbox run --config=.github/devbox-intel -- \
-            env ZANE_CC="$GITHUB_WORKSPACE/dev/bin/clang-lld" \
-                LLVM_CONFIG=llvm-config \
-                ZANE_REAL_CMAKE="$real_cmake" \
-                CPATH="$CPATH" \
-                "$GITHUB_WORKSPACE/dev/setup/bootstrap-toolchain"
       - name: Install verified native Zig
         run: .github/scripts/install-zig-macos "$ZIG_MANIFEST"
       - name: Build compiler and package macOS toolchain
         env:
           SOURCE_SHA: ${{ github.sha }}
         run: |
-          if [ "${{ matrix.arch }}" = x86_64 ]; then
-            devbox run --config=.github/devbox-intel -- \
-              env ZANE_CC="$GITHUB_WORKSPACE/dev/bin/clang-lld" \
-                  LLVM_CONFIG=llvm-config \
-                  bash "$GITHUB_WORKSPACE/.github/scripts/build-macos-compiler"
-          else
-            devbox run -- dune build bin/zanec/zanec.exe
-            devbox run -- python3 dev/release/package-macos.py \
-              --binary _build/default/bin/zanec/zanec.exe --zig "$ZIG" \
-              --zig-manifest "$ZIG_MANIFEST" --version "$VERSION" \
-              --commit "$SOURCE_SHA" --output dist
-          fi
+          devbox run -- dune build bin/zanec/zanec.exe
+          devbox run -- python3 dev/release/package-macos.py \
+            --binary _build/default/bin/zanec/zanec.exe --zig "$ZIG" \
+            --zig-manifest "$ZIG_MANIFEST" --version "$VERSION" \
+            --commit "$SOURCE_SHA" --output dist
       - name: Smoke-test extracted macOS toolchain
         run: |
           mkdir -p "$RUNNER_TEMP/macos-smoke"
@@ -256,8 +210,6 @@ jobs:
         include:
           - runner: macos-latest
             arch: aarch64
-          - runner: macos-15-intel
-            arch: x86_64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     steps:

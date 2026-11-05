@@ -39,10 +39,9 @@ linked into the compiler as a library, with the arguments the C compiler
 would give it (§7).
 
 The bindings are LLVM's own, from `llvm/bindings/ocaml` in llvm-project.
-Linux and ARM macOS use the opam `llvm` package pinned to LLVM 19.
-Intel macOS uses Nixpkgs' OCaml 5.4 bindings, built with LLVM 21, because
-building the bindings through opam fails with the Intel runner's mixed C++
-toolchain. The Intel Devbox pins both packages to the same Nixpkgs revision.
+Linux and macOS use the opam `llvm` package pinned to LLVM 19. On Intel macOS,
+the opam build explicitly selects libc++, the C++ standard library used by the
+Darwin toolchain.
 
 The module's text is LLVM's to print and changes between releases, so the
 tests read the CGT and what a built program writes instead (§7).

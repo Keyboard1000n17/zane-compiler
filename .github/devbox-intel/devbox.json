@@ -1,20 +1,17 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
   "packages": {
-    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#clang_21": {
+    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#clang_19": {
       "outputs": ["out"]
     },
-    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#lld_21": {
+    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#lld_19": {
       "outputs": ["out", "dev", "lib"]
     },
-    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#llvm_21": {
+    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#llvm_19": {
       "outputs": ["out", "dev", "lib"]
     },
-    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#llvmPackages_21.libclang": {
+    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#llvmPackages_19.libclang": {
       "outputs": ["out", "dev", "lib"]
-    },
-    "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#ocaml-ng.ocamlPackages_5_4.llvm": {
-      "outputs": ["out"]
     },
     "github:NixOS/nixpkgs/329c3d2af6d1b618705150ea39f72c15eb4e613e#m4": {
       "outputs": ["out"]

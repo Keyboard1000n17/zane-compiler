@@ -10,11 +10,10 @@ included here.
 
 The archive also includes:
 
-- LLVM 19 on Linux and ARM macOS, or LLVM 21 on Intel macOS, with its linker
-  LLD and clang's C front end built into the compiler, and clang's builtin
-  headers embedded in it (Apache-2.0 with LLVM exceptions):
+- LLVM 19 on Linux and macOS, with its linker LLD and clang's C front end built
+  into the compiler, and clang's builtin headers embedded in it (Apache-2.0
+  with LLVM exceptions):
   https://github.com/llvm/llvm-project/tree/llvmorg-19.1.7
-  https://github.com/llvm/llvm-project/tree/llvmorg-21.1.8
 - Coda's parser and OCaml binding (MIT), built into the compiler from the
   submodule at `vendor/coda`: https://github.com/zane-lang/coda
 - OCaml's native runtime (LGPL-2.1 with the OCaml linking exception):

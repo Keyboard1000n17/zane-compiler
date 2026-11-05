@@ -10,6 +10,7 @@ on:
       - ".github/actions/setup-ci/**"
       - ".github/devbox-intel/**"
       - ".github/scripts/build-macos-compiler"
+      - ".github/scripts/cmake-libcxx"
       - "dev/release/**"
       - "dev/toolchains/**"
       - ".github/scripts/install-zig-macos"
@@ -179,30 +180,20 @@ jobs:
         if: matrix.arch == 'x86_64'
         shell: bash
         run: |
-          nix_profile="$GITHUB_WORKSPACE/.github/devbox-intel/.devbox/nix/profile/default"
-          ocaml_lib="$nix_profile/lib/ocaml"
-          llvm_meta=""
-          if [ -d "$ocaml_lib" ]; then
-            llvm_meta="$(find -L "$ocaml_lib" -path '*/llvm/META' -print -quit)"
-          fi
-          if [ -z "$llvm_meta" ]; then
-            echo "Nix OCaml LLVM bindings were not installed in the Intel Devbox profile" >&2
-            exit 1
-          fi
-          ocaml_site_lib="${llvm_meta%/llvm/META}"
-          echo "ZANE_OCAML_EXTRA_PATH=$ocaml_site_lib" >> "$GITHUB_ENV"
           apple_clang="$(xcrun --find clang)"
-          apple_clangxx="$(xcrun --find clang++)"
+          cmake_bin="$RUNNER_TEMP/llvm-cmake-bin"
+          mkdir -p "$cmake_bin"
+          ln -s "$GITHUB_WORKSPACE/.github/scripts/cmake-libcxx" "$cmake_bin/cmake"
+          real_cmake="$(command -v cmake)"
+          echo "ZANE_REAL_CMAKE=$real_cmake" >> "$GITHUB_ENV"
+          echo "$cmake_bin" >> "$GITHUB_PATH"
+          export PATH="$cmake_bin:$PATH"
           apple_clang_headers="$("$apple_clang" -print-resource-dir)/include"
           export CPATH="$apple_clang_headers${CPATH:+:$CPATH}"
           devbox run --config=.github/devbox-intel -- \
             env ZANE_CC="$GITHUB_WORKSPACE/dev/bin/clang-lld" \
                 LLVM_CONFIG=llvm-config \
-                ZANE_NIX_OCAML_LLVM=1 \
-                ZANE_LLVM_VERSION=21 \
-                ZANE_OCAML_EXTRA_PATH="$ocaml_site_lib" \
-                CC="$apple_clang" \
-                CXX="$apple_clangxx" \
+                ZANE_REAL_CMAKE="$real_cmake" \
                 CPATH="$CPATH" \
                 "$GITHUB_WORKSPACE/dev/setup/bootstrap-toolchain"
       - name: Install verified native Zig
@@ -215,9 +206,6 @@ jobs:
             devbox run --config=.github/devbox-intel -- \
               env ZANE_CC="$GITHUB_WORKSPACE/dev/bin/clang-lld" \
                   LLVM_CONFIG=llvm-config \
-                  ZANE_NIX_OCAML_LLVM=1 \
-                  ZANE_LLVM_VERSION=21 \
-                  ZANE_OCAML_EXTRA_PATH="$ZANE_OCAML_EXTRA_PATH" \
                   bash "$GITHUB_WORKSPACE/.github/scripts/build-macos-compiler"
           else
             devbox run -- dune build bin/zanec/zanec.exe
